@@ -1,0 +1,98 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import CreateInterview from './_components/CreateInterview';
+import { fetchInterviewsFromAPI } from '@/app/service/interview/fetchInterviewsFromAPI';
+import InprogressInterviewsList from './_components/InprogressInterviewsList';
+import AllInteviewsList from './_components/AllInteviewsList';
+
+
+
+export default function InterviewDashboardPage() {
+    const [interviews, setInterviews] = useState([]);
+    const [inProgressInterviews, setInProgressInterviews] = useState([]);
+
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const fetchInterviews = async () => {
+            const { data, error } = await fetchInterviewsFromAPI();
+
+            if (!isMounted) return;
+
+            if (error) {
+                console.error('Error fetching interviews:', error);
+                setError(error);
+            } else {
+                setInterviews(data);
+                const inprogressList = data.filter((interview) => interview?.status === 'open')
+                setInProgressInterviews(inprogressList)
+                setError(null);
+            }
+
+            setLoading(false);
+        };
+
+        fetchInterviews();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    const renderHeader = () => (
+        <div>
+            <h1 className="text-xl font-semibold text-gray-800 mb-4">Dashboard</h1>
+
+            <div className="flex flex-col sm:flex-row justify-between gap-4">
+                <CreateInterview
+                    header="Create New Interview"
+                    paragraph="Initiate a new AI-driven interview session tailored to your requirements."
+                    iconType="mic"
+                />
+                <CreateInterview
+                    header="Create Phone Screening"
+                    paragraph="Set up an AI-powered phone screening to assess candidates efficiently."
+                    iconType="phone"
+                />
+            </div>
+        </div>
+    );
+
+    const renderInterviews = () => {
+        if (loading) {
+            return <p className="text-gray-500 text-center mt-10">Loading interviews...</p>;
+        }
+
+        if (error) {
+            return <p className="text-red-500 text-center mt-10">Error: {error}</p>;
+        }
+
+        if (interviews.length === 0) {
+            return <p className="text-gray-400 text-center mt-10">No interviews found.</p>;
+        }
+
+        return (
+            <> 
+                {/* New Open Interviews */}
+                <InprogressInterviewsList inProgressInterviews={inProgressInterviews} /> :
+
+
+                {/* All Interviews */}
+                <AllInteviewsList interviews={interviews} />
+            </>
+        );
+    };
+
+    return (
+        <main className="min-h-screen p-6 md:p-8 bg-gray-100" style={{ fontFamily: 'var(--font-roboto)' }}>
+            <div className="space-y-6">
+                {renderHeader()}
+                {renderInterviews()}
+            </div>
+        </main>
+    );
+}
