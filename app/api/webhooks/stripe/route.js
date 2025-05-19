@@ -1,5 +1,5 @@
 // app/api/webhooks/stripe/route.ts
-import savePayment, { checkPaymentExists, createPaymentData } from '@/app/service/payment/paymentService';
+import savePayment, { checkPaymentExists, createPaymentData, upsertSubscription, upsertUsage } from '@/app/service/payment/paymentService';
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
@@ -23,6 +23,10 @@ export const config = {
     bodyParser: false,
   },
 }; 
+
+function isSubscription(session) {
+  return session.metadata?.plan !== undefined;
+}
 
 
 export async function POST(req) {
@@ -61,15 +65,17 @@ export async function POST(req) {
         const session = event.data.object;
         console.log(`Checkout session ${session.id} completed! Payment Status: ${session.payment_status}`);
 
-        const clerkUserId =
-        session.metadata?.clerkUserId || session.client_reference_id;
-
+        // get the clerk Id from metadata
+        const clerkUserId = session.metadata?.clerkUserId || session.client_reference_id;
         console.log('✅ Clerk user ID from session:', clerkUserId);
 
         if (!clerkUserId) {
             console.warn('No Clerk user ID found in session metadata');
             return NextResponse.json({ error: 'Missing user ID' }, { status: 400 });
         }
+
+        // get credits from metadata
+        const credits = session.metadata?.credits
 
         if (session.payment_status === 'paid') {
           const checkoutSessionId = session.id;
@@ -83,13 +89,22 @@ export async function POST(req) {
             const subs = await stripe.subscriptions.retrieve(session.subscription);
             const invoice = await stripe.invoices.retrieve(subs.latest_invoice);
 
-            const paymentData = createPaymentData(session, clerkUserId, invoice);
+            const paymentData = createPaymentData(session, clerkUserId, invoice, credits);
             console.log("paymentData: ", paymentData)
 
             await savePayment(paymentData);
 
             console.log(`✅ Payment record saved for session ${checkoutSessionId}.`);
+            
             // Add fulfillment logic here
+            if (isSubscription(session)) {
+                const plan = session.metadata?.plan || 'BASIC_MONTHLY';
+                await upsertSubscription(clerkUserId, plan);
+                await upsertUsage(clerkUserId, credits);
+            }
+
+
+
           } catch (dbError) {
             console.error('Database operation failed:', dbError);
             return NextResponse.json({ error: 'Failed to process payment data.' }, { status: 500 });

@@ -18,9 +18,9 @@ export default function CallComponent({ interviewAttemptId, interviewId }) {
 
 
   const { interviewDetails, questions, loadingInterview, loadingQuestions, interviewError } = useInterviewData(interviewId);
-  const { assistantSpeaking, liveMessages, chatMessages, callActive, chat, stopCall, vapiError, conversationsRef, loadingReport, loadingGenerateReport, reportError, handleCall } = useVapi(interviewDetails, questions, interviewAttemptId);
+  const { assistantSpeaking, liveMessages, chatMessages, callActive, chat, stopCall, vapiError, conversationsRef, loadingReport, loadingGenerateReport, reportError, handleCall, callStarted } = useVapi(interviewDetails, questions, interviewAttemptId);
 
-console.log("interviewDetails: ", interviewDetails)
+  // console.log("interviewDetails: ", interviewDetails)
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -49,7 +49,7 @@ console.log("interviewDetails: ", interviewDetails)
 
         <InterviewHeader interviewDetails={interviewDetails} stopCall={stopCall} />
 
-        <MockInterview handleCall={handleCall} chat={chat} chatMessages={chatMessages} liveMessages={liveMessages} assistantSpeaking={assistantSpeaking} chatEndRef={chatEndRef} callActive={callActive} loadingInterview={loadingInterview} loadingQuestions={loadingQuestions} />
+        <MockInterview handleCall={handleCall} chat={chat} callStarted={callStarted} chatMessages={chatMessages} liveMessages={liveMessages} assistantSpeaking={assistantSpeaking} chatEndRef={chatEndRef} callActive={callActive} loadingInterview={loadingInterview} loadingQuestions={loadingQuestions} />
       </div>
     </>
   )

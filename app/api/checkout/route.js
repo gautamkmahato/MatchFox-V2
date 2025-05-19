@@ -1,8 +1,11 @@
 import Stripe from "stripe";
 import { currentUser } from '@clerk/nextjs/server';
+import { PLAN_LIMITS } from "@/lib/utils/constants/plan";
 
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+
 
 export async function POST(request) {
 
@@ -21,7 +24,10 @@ export async function POST(request) {
 
         const selectedPriceId = priceMap[credits]; // Get correct Price ID
 
+        const plan = PLAN_LIMITS[credits]?.name;
+
         console.log("Credits selected:", credits);
+        console.log("Plans selected:", plan);
         console.log("Using Price ID:", selectedPriceId);
 
         if (!selectedPriceId) {
@@ -72,7 +78,8 @@ export async function POST(request) {
             customer: customerId,           // Link the session to the customer ID
             metadata: {
                 clerkUserId: userId,       // 👈 Optional: store it in metadata too
-                plan: 'pro',                // get the correct plan name
+                plan: plan || 'BASIC_MONTHLY',                // get the correct plan name
+                credits: credits            // provide credits 
             },
             success_url: `${origin}/`,
             cancel_url: `${origin}/`,

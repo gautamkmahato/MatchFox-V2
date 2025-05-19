@@ -86,14 +86,16 @@ export async function POST(req) {
 
     if (!userId) {
       return NextResponse.json({ state: false, error: 'Unauthorized', message: "Failed" }, { status: 401 });
-    }
+    } 
     
     // Step 2: Get form data from request body
     const body = await req.json();
     console.log("Received body:", body);
 
     // Step 3: Destructure and validate required fields
-    const { interview_attempt_id, score, recommendation, report } = body;
+    const { interview_attempt_id, score, recommendation, report, duration } = body;
+
+    console.log(duration)
     
     // Improved validation - check for existence and proper types
     const validationErrors = [];
@@ -112,6 +114,10 @@ export async function POST(req) {
     
     if (!report || typeof report !== 'object' || Array.isArray(report)) {
       validationErrors.push('report must be a valid object');
+    }
+
+    if(!duration){
+      validationErrors.push('Error in duration value')
     }
 
     if (validationErrors.length > 0) {
@@ -150,7 +156,8 @@ export async function POST(req) {
       interview_attempt_id: interview_attempt_id,
       score: score.toString(), // Ensure score is string as per DB schema
       recommendation: !!recommendation, // Convert to boolean
-      report: report // Directly pass the object (Supabase handles jsonb)
+      report: report, // Directly pass the object (Supabase handles jsonb)
+      duration: duration
     };
 
     console.log("Inserting data:", insertData);

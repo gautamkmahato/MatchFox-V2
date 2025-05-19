@@ -117,7 +117,7 @@ export default function InterviewPage({ interviewId }) {
  
   if (showCallComponent) {
     return <CallComponent interviewAttemptId={interviewAttemptId} interviewId={interviewId} />;
-  }
+  }  
 
   if (interviewAttempted) {
     return (

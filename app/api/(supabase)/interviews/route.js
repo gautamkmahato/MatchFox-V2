@@ -14,7 +14,7 @@ const InterviewSchema = z.object({
   status: z.string().min(1),
   interview_type: z.string().min(1),
   interview_style: z.string().min(1),
-  duration: z.number().min(1),
+  duration: z.string().min(1),
   position: z.string().min(1),
   location: z.string().min(1),
   experience: z.string().min(1),

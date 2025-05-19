@@ -13,6 +13,7 @@ export const useVapi = (interviewDetails, questions, interviewAttemptId) => {
   const [vapi, setVapi] = useState(null);
   const [interviewStatus, setInterviewStatus] = useState(null);
 
+  const callEnded = useRef(false); // Add this line
 
 
   const conversationsRef = useRef([]);
@@ -20,10 +21,11 @@ export const useVapi = (interviewDetails, questions, interviewAttemptId) => {
   const { isSignedIn, user, isLoaded } = useUser();
 
   const stopCall = () => {
-    if (vapi && callStarted) {
+    if (vapi && callStarted && !callEnded.current) {
         vapi.stop();
         setCallStarted(false);
         setCallActive(false);
+        callEnded.current = true; // Mark call as ended
         console.log("User stopped the call");
     } else {
         console.log("Call has not started yet.");
@@ -119,10 +121,14 @@ export const useVapi = (interviewDetails, questions, interviewAttemptId) => {
     });
 
     vapi.on('call-end', () => {
-      console.log('Call has ended.');
-      setCallActive(false);
-      setCallStarted(false);
-    });
+    console.log('Call has ended.');
+    setCallActive(false);
+    setCallStarted(false);
+    if (!callEnded.current) {
+      callEnded.current = true;
+      //handleCall(); // Only call handleCall if we haven't already
+    }
+  });
 
     vapi.on('message', (message) => {
       console.log('Vapi Message:', message);
@@ -147,7 +153,7 @@ export const useVapi = (interviewDetails, questions, interviewAttemptId) => {
 
       // Call handleCall when error occurs
       try {
-        handleCall();
+        // handleCall(); // No need to call the handle call here
         stopCall(); // Use the same stopCall function for consistency
 
       } catch (error) {

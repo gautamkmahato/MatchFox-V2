@@ -10,7 +10,7 @@ import { validateJobDescription } from "@/lib/utils/validateJobDescription";
 export default function JobDescriptionForm({ onSubmit, initialData = {} }) {
   const [jobDescription, setJobDescription] = useState(initialData.jobDescription || "");
   const [difficultyLevel, setDifficultyLevel] = useState(initialData.difficultyLevel || "");
-  const [duration, setDuration] = useState(initialData.duration || "");
+  const [duration, setDuration] = useState(initialData.duration || 0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 

@@ -2,9 +2,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { currentUser } from '@clerk/nextjs/server';
-import { createClient } from '@/lib/supabase/server';
-
-const supabase = createClient();
+import supabase from '@/lib/supabase/client';
 
 const ParamsSchema = z.object({
   id: z.string().uuid({ message: 'Invalid interview ID format' })

@@ -37,6 +37,7 @@ export const useReport = (interviewAttemptId, conversationsRef, stopCall) => {
   }
 
   const handleCall = async () => {
+    if (loadingReport || loadingGenerateReport) return; // Prevent duplicate calls
     console.log("interview completed");
     await stopCall()
     console.log("generate Report called...")
@@ -55,6 +56,7 @@ export const useReport = (interviewAttemptId, conversationsRef, stopCall) => {
         interview_attempt_id: interviewAttemptId,
         recommendation: jsonData?.final_verdict?.recommendation === 'YES' ? true : false,
         score: jsonData?.final_verdict?.score,
+        duration: 15,
         report: jsonData,
       };
       console.log("input: ", input)

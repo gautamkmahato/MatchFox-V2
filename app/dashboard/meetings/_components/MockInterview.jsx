@@ -1,8 +1,16 @@
 'use client';
 
+import { useEffect } from 'react';
 import UserVideoPlaceholder from './UserVideoPlaceholder';
 
-export default function MockInterview({ handleCall, chat, chatMessages, chatEndRef, assistantSpeaking, liveMessages, callActive, loadingInterview, loadingQuestions }) {
+export default function MockInterview({ handleCall, chat, callStarted, chatMessages, chatEndRef, assistantSpeaking, liveMessages, callActive, loadingInterview, loadingQuestions }) {
+  
+  useEffect(() => {
+    if (!callActive && callStarted) {
+      handleCall();
+    }
+  }, [callActive, callStarted, handleCall]);
+  
   return (
     <div className="w-full flex flex-col items-center justify-center bg-gray-50 px-4">
 

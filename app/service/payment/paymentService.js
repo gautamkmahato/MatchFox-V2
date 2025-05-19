@@ -1,7 +1,9 @@
 
 
 import supabase from '@/lib/supabase/client';
+import { PLAN_LIMITS } from '@/lib/utils/constants/plan';
 import crypto from 'crypto';
+import { addMonths } from 'date-fns';
 
 
 
@@ -25,7 +27,7 @@ export async function checkPaymentExists(transactionId) {
   }
 }
 
-export function createPaymentData(session, userId, invoice) {
+export function createPaymentData(session, userId, invoice, credits) {
   return {
     id: crypto.randomUUID(),
     user_id: userId, // Ensure client_reference_id is set during checkout creation
@@ -33,7 +35,7 @@ export function createPaymentData(session, userId, invoice) {
     payment_provider: 'stripe',
     payment_status: session.payment_status,
     transaction_id: session.id,
-    credits: 100, // Review this: Should be dynamic?
+    credits: credits || 100, // Review this: Should be dynamic?
     remarks: session.metadata?.description || 'Stripe Purchase',
     customer_id: typeof session.customer === 'string' ? session.customer : null,
     invoice_id: typeof session.invoice === 'string' ? session.invoice : null,
@@ -62,3 +64,50 @@ export default async function savePayment(paymentData) {
   }
 }
 
+export async function upsertSubscription(userId, plan) {
+  const startedAt = new Date();
+  const expiresAt = addMonths(startedAt, 1);
+
+  const { error } = await supabase
+    .from('subscriptions')
+    .upsert({
+      user_id: userId,
+      plan,
+      started_at: startedAt.toISOString(),
+      expires_at: expiresAt.toISOString(),
+      status: 'active'
+    }, {
+      onConflict: 'user_id' // ensures upsert by user_id
+    });
+
+  if (error) {
+    console.error('❌ Failed to upsert subscription:', error.message);
+    throw new Error('Failed to upsert subscription');
+  }
+
+  console.log('✅ Subscription upserted successfully');
+}
+
+
+export async function upsertUsage(userId, credits) {
+  const limits = PLAN_LIMITS[credits] || PLAN_LIMITS[20];
+
+  const { error } = await supabase
+    .from('usage')
+    .upsert({
+      user_id: userId,
+      remaining_minutes: limits.minutes,
+      last_reset: new Date().toISOString(),
+    }, {
+      onConflict: 'user_id' // ensures upsert by user_id
+    });
+
+  
+
+  if (error) {
+    console.error('❌ Failed to upsert usage limits:', error);
+    throw new Error('Failed to upsert usage limits');
+  }
+
+  console.log('✅ Usage minutes set for credits:', credits);
+}
